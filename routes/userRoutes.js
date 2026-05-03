@@ -1,14 +1,22 @@
 import express from "express";
-import { createUser, getUsers } from "../controllers/userController.js";
+import {
+  createUser,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser
+} from "../controllers/userController.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { checkRole } from "../middleware/checkRole.js";
 
 const router = express.Router();
 
-// hanya superadmin
-router.post("/", verifyToken, checkRole(["superadmin"]), createUser);
+router.use(verifyToken); // semua wajib login
 
-// lihat semua user (superadmin)
-router.get("/", verifyToken, checkRole(["superadmin"]), getUsers);
+router.post("/", createUser);
+router.get("/", getUsers);
+router.get("/:id", getUserById);
+router.put("/:id", updateUser);
+router.delete("/:id", deleteUser);
 
 export default router;

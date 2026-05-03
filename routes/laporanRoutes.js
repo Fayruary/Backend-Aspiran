@@ -1,8 +1,10 @@
 import express from "express";
 import {
-  createLaporan,
+   createLaporan,
   getLaporan,
-  updateStatus
+  updateLaporan,
+  updateStatus,
+  deleteLaporan
 } from "../controllers/laporanController.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
@@ -11,10 +13,12 @@ import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
-router.get("/", verifyToken, getLaporan);
+router.use(verifyToken);
 
-router.post("/", verifyToken, upload.single("image"), createLaporan);
-
-router.put("/:id", verifyToken, checkRole(["admin", "superadmin"]), updateStatus);
+router.post("/", createLaporan);
+router.get("/", getLaporan);
+router.put("/:id", updateLaporan);
+router.patch("/:id/status", updateStatus);
+router.delete("/:id", deleteLaporan);
 
 export default router;
