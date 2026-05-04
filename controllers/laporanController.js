@@ -24,9 +24,9 @@ export const createLaporan = async (req, res) => {
 
     const { title, description, category_id } = req.body;
 
-    if (!title || !description || !category_id) {
-      return res.status(400).json({ message: "Data tidak lengkap" });
-    }
+    if (!title || !description || category_id == null) {
+  return res.status(400).json({ message: "Data tidak lengkap" });
+}
 
     const code = await generateCode();
     const image = req.file ? req.file.filename : null;
@@ -67,6 +67,7 @@ export const getLaporan = async (req, res) => {
         l.status,
         l.created_at,
         l.user_id,
+        l.category_id,
         u.username,
         c.name AS category
       FROM laporan l
@@ -96,10 +97,14 @@ export const getLaporan = async (req, res) => {
 // ─────────────────────────────
 export const updateLaporan = async (req, res) => {
   try {
-    const { title, description, category_id } = req.body;
+    let { title, description, category_id } = req.body;
+category_id = category_id ? Number(category_id) : null;
     const id = req.params.id;
 
-    const [rows] = await db.query("SELECT * FROM laporan WHERE id = ?", [id]);
+    const [rows] = await db.query(
+      "SELECT * FROM laporan WHERE id = ?",
+      [id]
+    );
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Laporan tidak ditemukan" });
@@ -107,24 +112,31 @@ export const updateLaporan = async (req, res) => {
 
     const laporan = rows[0];
 
-    // hanya pemilik yang boleh edit
+    // ✅ hanya pemilik
     if (laporan.user_id !== req.user.id) {
       return res.status(403).json({ message: "Tidak diizinkan" });
     }
 
+    // ✅ TAMBAHAN PENTING: hanya bisa edit saat pending
+    if (laporan.status !== "pending") {
+      return res.status(400).json({
+        message: "Laporan tidak bisa diedit karena sudah diproses",
+      });
+    }
+
     await db.query(
       `UPDATE laporan 
-       SET title=?, description=?, category_id=?
+       SET title=?, description=?, category_id=? 
        WHERE id=?`,
       [title, description, category_id, id]
     );
 
     res.json({ message: "Laporan berhasil diupdate" });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 // update status (admin)
 export const updateStatus = async (req, res) => {
   try {
