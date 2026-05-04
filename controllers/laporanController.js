@@ -29,21 +29,23 @@ export const createLaporan = async (req, res) => {
 }
 
     const code = await generateCode();
-    const image = req.file ? req.file.filename : null;
+    const images = req.files
+  ? req.files.map(file => file.filename)
+  : [];
 
-    await db.query(
-      `INSERT INTO laporan 
-      (title, description, image, tracking_code, status, user_id, category_id)
-      VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
-      [
-        title,
-        description,
-        image,
-        code,
-        req.user.id,
-        category_id,
-      ]
-    );
+await db.query(
+  `INSERT INTO laporan 
+  (title, description, image, tracking_code, status, user_id, category_id)
+  VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
+  [
+    title,
+    description,
+    JSON.stringify(images), // 👈 INI TEMPATNYA
+    code,
+    req.user.id,
+    category_id,
+  ]
+);
 
     res.json({
       message: "Laporan berhasil dibuat",

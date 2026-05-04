@@ -15,7 +15,11 @@ const router = express.Router();
 
 router.use(verifyToken);
 
-router.post("/", createLaporan);
+router.post(
+  "/",
+  upload.array("images", 5),
+  createLaporan
+);
 router.get("/", getLaporan);
 router.put("/:id", updateLaporan);
 router.patch("/:id/status", updateStatus);
