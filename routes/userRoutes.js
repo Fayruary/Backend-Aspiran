@@ -4,14 +4,18 @@ import {
   getUsers,
   getUserById,
   updateUser,
-  deleteUser
+  deleteUser,
+  updateMyProfile,
+  changeMyPassword,
 } from "../controllers/userController.js";
 import { verifyToken } from "../middleware/verifyToken.js";
-import { checkRole } from "../middleware/checkRole.js";
 
 const router = express.Router();
 
-router.use(verifyToken); // semua wajib login
+router.use(verifyToken); // semua route wajib login
+
+router.put("/me", updateMyProfile);          // update username sendiri
+router.put("/me/password", changeMyPassword); // ganti password sendiri
 
 router.post("/", createUser);
 router.get("/", getUsers);

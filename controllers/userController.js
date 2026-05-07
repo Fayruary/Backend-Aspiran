@@ -91,6 +91,75 @@ export const updateUser = async (req, res) => {
 };
 
 // ─────────────────────────────
+// UPDATE PROFILE SENDIRI
+// ─────────────────────────────
+export const updateMyProfile = async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: "Username tidak boleh kosong" });
+    }
+
+    await db.query(
+      "UPDATE users SET username = ? WHERE id = ?",
+      [username.trim(), req.user.id]
+    );
+
+    // Ambil data terbaru untuk dikembalikan ke frontend
+    const [rows] = await db.query(
+      "SELECT id, username, email, role FROM users WHERE id = ?",
+      [req.user.id]
+    );
+
+    res.json({ message: "Profil berhasil diperbarui", user: rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ─────────────────────────────
+// GANTI PASSWORD SENDIRI
+// ─────────────────────────────
+export const changeMyPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Data tidak lengkap" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password baru minimal 6 karakter" });
+    }
+
+    const [rows] = await db.query(
+      "SELECT password FROM users WHERE id = ?",
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User tidak ditemukan" });
+    }
+
+    const match = await bcrypt.compare(oldPassword, rows[0].password);
+    if (!match) {
+      return res.status(400).json({ message: "Password lama tidak sesuai" });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hash, req.user.id]
+    );
+
+    res.json({ message: "Password berhasil diubah" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ─────────────────────────────
 // DELETE USER
 // ─────────────────────────────
 export const deleteUser = async (req, res) => {
